@@ -6,7 +6,7 @@ set -e
 SCRIPT_VERSION="v0.0.1"
 SCRIPT_NAME="Pterodactyl Wings Updater"
 LOG_PATH="/var/log/pterodactyl-updater.log"
-GITHUB_BASE_URL="https://raw.githubusercontent.com/revoX-Development/pterodactyl-updater/master"
+GITHUB_BASE_URL="https://raw.githubusercontent.com/revoX-Development/pterodactyl-updater/"
 
 
 if [[ $EUID -ne 0 ]]; then
@@ -26,7 +26,7 @@ output() {
 }
 
 execute() {
-    echo -e "\n\n* pterodactyl/wings-updater $(date) \n\n" >>$LOG_PATH
+    echo -e "\n\n* $SCRIPT_NAME $(date) \n\n" >>$LOG_PATH
 
   bash <(curl -s "$1") | tee -a $LOG_PATH
   [[ -n $2 ]] && execute "$2"

@@ -24,7 +24,7 @@ PTERODACTYL_VERSION="$(get_latest_release "pterodactyl/panel")"
 getting_rightversion(){
     if [ $PTERODACTYL_VERSION = $PTERODACTYL_VERSION ]; then
         echo "Pterodactyl is up to date"
-        exit 1
+        
     else
         echo "Pterodactyl is not up to date. Update Pterodactyl"
     fi
