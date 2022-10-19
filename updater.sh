@@ -53,6 +53,18 @@ install_options(){
     output "[1] Upgrade panel to the latest version"
     output "[2] Upgrade wings to the latest version."
     output "[3] Upgrade panel and wings to the latest version."
+    read -r choice
+    case $choice in
+        1 ) installoption=1
+            output "You have selected the pterodactyl panel upgrade option."
+            ;;
+        2 ) installoption=2
+            output "You have selected the pterodactyl wings upgrade option."
+            ;;
+        3 ) installoption=3
+            output "You have selected the pterodactyl panel and wings upgrade option."
+            ;;
+    esac
 }
 
 get_latest_release() {
@@ -66,14 +78,15 @@ PTERODACTYL_VERSION="$(get_latest_release "pterodactyl/panel")"
 
 getting_rightversion_ptero(){
     if [ $PTERODACTYL_VERSION = $PTERODACTYL_VERSION ]; then
-        echo "Pterodactyl is up to date"
-        
+        echo "Pterodactyl is up to date. Exiting Updating Script"
+        exit 2
     else
-        echo "Pterodactyl is not up to date. Update Pterodactyl"
+        echo "Update from Pterodactyl avaible. Update Pterodactyl"
     fi
 }
 
-
+lsb_dist="$(. /etc/os-release && echo "$ID")"
+dist_version="$(. /etc/os-release && echo "$VERSION_ID")"
 
 detect_distro() {
   if [ -r /etc/os-release ]; then
@@ -92,8 +105,8 @@ detect_distro() {
             exit 2
         fi
     elif [ "$lsb_dist" = "debian" ]; then
-        if [ "$dist_version" != "11" || $dist_version == '10']; then
-            output "Unsupported Debian version. Only Debian 10 is supported."
+        if [ "$dist_version" > "9" ]; then
+            output "Unsupported Debian version. Only Debian 10 & 11 is supported."
             exit 2
         fi
     elif [ "$lsb_dist" = "centos" ]; then
@@ -113,30 +126,34 @@ detect_distro() {
 }
 
 detecting_webserver(){
-    if [ $lsb_dist == "debian " ||$lsb_dist == "ubuntu "]; then
-    echo "You're using $OS"
-        echo "Set Permissions for webserver"
-        chown -R www-data:www-data /var/www/pterodactyl/*
-    elif [ $lsb_dist == "centos" ]; then
+if [ $lsb_dist == "debian "]; then
+ echo "You're using $OS"
+  echo "Set Permissions for webserver"
+  chown -R www-data:www-data /var/www/pterodactyl/*
+if [ $lsb_dist == "centos" ]; then
     echo "You're using $OS"
     echo "Detecting nginx or apache2"
-        if [ -f /etc/apache2]; then
-        echo "using apache2 on $OS" 
-        chown -R apache:apache /var/www/pterodactyl/*
-        elif  [ -f /etc/nginx]; then
-        echo   "using nginx on $OS"
-        chown -R nginx:nginx /var/www/pterodactyl/*
-        else 
-        echo "No webserver detected"
-    fi
-    fi
+    if [ -f /etc/apache2]; then
+    echo "using apache2 on $OS" 
+    chown -R apache:apache /var/www/pterodactyl/*
+    if  [ -f /etc/nginx]; then
+    echo "using nginx on $OS"
+    chown -R nginx:nginx /var/www/pterodactyl/*
+else 
+ echo "No webserver detected"
+fi
+fi
+fi
+fi
 }
 
 update_panel(){
     echo "Detecting OS..."
     detect_distro
-    echo "* Updating Pterodactyl Panel"
+    echo "Detected $lsb_dist $dist_version"
+    echo "Updating Pterodactyl Panel"
     echo "Enable Maintanance Mode"
+    ch /var/www/pterodactyl
     php artisan down
     echo "Donwloading latest panel update ..."
     curl -L https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz | tar -xzv
@@ -160,7 +177,7 @@ update_panel(){
     php artisan queue:restart
     echo "Disable Maintanance Mode"
     php artisan up
-    echo "Panel is now updated to the latest version\n Now $PTERODACTYL_VERSION"
+    echo "Panel is now updated to the latest version. Now $PTERODACTYL_VERSION"
 }
 
 goodbey_ptero(){
@@ -185,9 +202,8 @@ get_latest_release_wings() {
 WINGS_VERSION="$(get_latest_release_wings "pterodactyl/wings")"
 
 getting_rightversion_wings(){
-    if [ $WINGS_VERSION !== $WINGS_VERSION ]; then
+    if [ $WINGS_VERSION == $WINGS_VERSION ]; then
         echo "Wings is up to date"
-        exit 0
     else
         echo "Wings is not up to date"
         echo "Updating Wings"
@@ -196,19 +212,9 @@ getting_rightversion_wings(){
 
 
 update_wings(){
-    echo "Detecting OS..."
-     if [ $OS == 'centos ']; then
-        OS=centos
-    elif [ $OS == "debian " ]; then
-        OS=debian
-    elif [ $OS == 'ubuntu ' ]; then
-        OS=ubuntu
-    else
-        echo "OS not supported\nOnly supported OS are: Debian, Ubuntu and CentOS"
-        exit 1
-    fi
-    echo "$OS detected"
-    echo "* Updating Wings"
+    detect_distro
+    echo "Detected $lsb_dist $dist_version"
+    echo "Updating Wings"
     echo "Stop wings"
     systemctl stop wings
     echo "Downloading latest wings update ..."
@@ -242,9 +248,3 @@ case $installoption in
     3)  upgrade_pterodactyl
 	      upgrade_wings
 esac
-
-    
-
-
-
-
