@@ -18,9 +18,16 @@ if ! [ -x "$(command -v curl)" ]; then
   exit 1
 fi
 
+output() {
+  echo -e "* ${1}"
+}
 
+execute() {
+  echo -e "\n\n* pterodactyl-installer $(date) \n\n" >>$LOG_PATH
 
-
+  bash <(curl -s "$1") | tee -a $LOG_PATH
+  [[ -n $2 ]] && execute "$2"
+}
 
 done=false
 
@@ -37,7 +44,6 @@ output
 PANEL_LATEST_UPDATER="$GITHUB_BASE_URL/$SCRIPT_VERSION/update-panel.sh"
 
 WINGS_LATEST_UPDATER="$GITHUB_BASE_URL/$SCRIPT_VERSION/update_wings.sh"
-
 
 
 while [ "$done" == false ]; do
