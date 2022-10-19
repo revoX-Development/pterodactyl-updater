@@ -213,21 +213,24 @@ getting_rightversion_wings(){
 
 update_wings(){
     detect_distro
-    echo "Detected $lsb_dist $dist_version"
+    output "Detected $lsb_dist $dist_version"
     echo "Updating Wings"
     echo "Stop wings"
     systemctl stop wings
+    echo "Stoppend wings"
     echo "Downloading latest wings update ..."
     curl -L -o /usr/local/bin/wings "https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_$([[ "$(uname -m)" == "x86_64" ]] && echo "amd64" || echo "arm64")"
+    echo "Download completed"
     echo "Set wings to executable"
     chmod u+x /usr/local/bin/wings
+    echo "Completed"
     echo "Start wings"
     systemctl start wings
    
 }
 
 goodbey_wings(){
-    echo "Wings is now updated to the latest version"
+    echo "Wings is now updated to $WINGS_VERSION"
     echo "Thanks for using this script"
     echo "Goodbye"
     exit 0
