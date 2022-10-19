@@ -105,7 +105,7 @@ detect_distro() {
             exit 2
         fi
     elif [ "$lsb_dist" = "debian" ]; then
-        if [ "$dist_version" > "9" ]; then
+        if [ "$dist_version" < "10" ]; then
             output "Unsupported Debian version. Only Debian 10 & 11 is supported."
             exit 2
         fi
