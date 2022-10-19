@@ -213,7 +213,7 @@ getting_rightversion_wings(){
 
 update_wings(){
     detect_distro
-    output "Detected $lsb_dist $dist_version"
+    echo "Detected $lsb_dist $dist_version"
     echo "Updating Wings"
     echo "Stop wings"
     systemctl stop wings
