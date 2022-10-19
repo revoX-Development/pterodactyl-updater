@@ -5,6 +5,7 @@ set -e
 
 SCRIPT_VERSION="v0.0.1"
 SCRIPT_NAME="Pterodactyl Wings Updater"
+LOG_PATH="/var/log/pterodactyl-updater.log"
 
 if [[ $EUID -ne 0 ]]; then
   echo "* This script must be executed with root privileges (sudo)." 1>&2
