@@ -7,6 +7,8 @@ SCRIPT_VERSION="v0.0.1"
 SCRIPT_NAME="Pterodactyl Wings Updater"
 LOG_PATH="/var/log/pterodactyl-updater.log"
 GITHUB_BASE_URL="https://raw.githubusercontent.com/revoX-Development/pterodactyl-updater/"
+PANEL= latest
+WINGS = latest
 
 
 if [[ $EUID -ne 0 ]]; then
@@ -54,13 +56,13 @@ install_options(){
     output "[3] Upgrade panel to ${PANEL} and daemon to ${WINGS}."
     read -r choice
     case $choice in
-        1 ) installoption=4
+        1 ) installoption=1
             output "You have selected to upgrade the panel to ${PANEL}."
             ;;
-	2 ) installoption=5
+	2 ) installoption=2
             output "You have selected to upgrade the daemon to ${DAEMON}."
             ;;
-        3 ) installoption=6
+        3 ) installoption=3
             output "You have selected to upgrade panel to ${PANEL} and daemon to ${DAEMON}."
             ;;
     esac
