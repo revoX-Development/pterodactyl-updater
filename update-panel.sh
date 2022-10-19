@@ -33,40 +33,40 @@ getting_rightversion(){
 
 
 detect_distro() {
-  if [ -f /etc/os-release ]; then
-    # freedesktop.org and systemd
-    . /etc/os-release
-    OS=$(echo "$ID" | awk '{print tolower($0)}')
-    OS_VER=$VERSION_ID
-  elif type lsb_release >/dev/null 2>&1; then
-    # linuxbase.org
-    OS=$(lsb_release -si | awk '{print tolower($0)}')
-    OS_VER=$(lsb_release -sr)
-  elif [ -f /etc/lsb-release ]; then
-    # For some versions of Debian/Ubuntu without lsb_release command
-    . /etc/lsb-release
-    OS=$(echo "$DISTRIB_ID" | awk '{print tolower($0)}')
-    OS_VER=$DISTRIB_RELEASE
-  elif [ -f /etc/debian_version ]; then
-    # Older Debian/Ubuntu/etc.
-    OS="debian"
-    OS_VER=$(cat /etc/debian_version)
-  elif [ -f /etc/SuSe-release ]; then
-    # Older SuSE/etc.
-    OS="SuSE"
-    OS_VER="?"
-  elif [ -f /etc/redhat-release ]; then
-    # Older Red Hat, CentOS, etc.
-    OS="Red Hat/CentOS"
-    OS_VER="?"
-  else
-    # Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
-    OS=$(uname -s)
-    OS_VER=$(uname -r)
-  fi
-
-  OS=$(echo "$OS" | awk '{print tolower($0)}')
-  OS_VER_MAJOR=$(echo "$OS_VER" | cut -d. -f1)
+  if [ -r /etc/os-release ]; then
+        lsb_dist="$(. /etc/os-release && echo "$ID")"
+        dist_version="$(. /etc/os-release && echo "$VERSION_ID")"
+        if [ "$lsb_dist" = "rhel" ] || [ "$lsb_dist" = "rocky" ] || [ "$lsb_dist" = "almalinux" ]; then
+            dist_version="$(echo $dist_version | awk -F. '{print $1}')"
+        fi
+    else
+        exit 1
+    fi
+    
+    if [ "$lsb_dist" =  "ubuntu" ]; then
+        if  [ "$dist_version" != "20.04" ]; then
+            output "Unsupported Ubuntu version. Only Ubuntu 20.04 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" = "debian" ]; then
+        if [ "$dist_version" != "11" || $dist_version == '10']; then
+            output "Unsupported Debian version. Only Debian 10 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" = "centos" ]; then
+        if [ "$dist_version" != "8" ]; then
+            output "Unsupported CentOS version. Only CentOS Stream 8 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" != "ubuntu" ] && [ "$lsb_dist" != "debian" ] && [ "$lsb_dist" != "fedora" ] && [ "$lsb_dist" != "centos" ] && [ "$lsb_dist" != "rhel" ] && [ "$lsb_dist" != "rocky" ] && [ "$lsb_dist" != "almalinux" ]; then
+        output "Unsupported operating system."
+        output ""
+        output "Supported OS:"
+        output "Ubuntu: 20.04"
+        output "Debian: 11"
+        output "CentOS Stream: 8"
+        exit 2
+    fi
 }
 
 detecting_webserver(){
@@ -94,7 +94,7 @@ update_panel(){
     detect_distro
     if [ $OS == "centos " ]; then
         OS=centos
-    elif [ $OS == "debian "]; then
+    elif [ $OS == "debian" ]; then
         OS=debian
     elif [ $OS == "ubuntu " ]; then
         OS=ubuntu

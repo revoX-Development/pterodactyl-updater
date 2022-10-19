@@ -45,38 +45,218 @@ output "This script is not associated with the official Pterodactyl Project."
 output
 
 output "This script will update your Pterodactyl Wings installation."
-PANEL_LATEST="$GITHUB_BASE_URL/$SCRIPT_VERSION/update-panel.sh"
-
-WINGS_LATEST="$GITHUB_BASE_URL/$SCRIPT_VERSION/update-wings.sh"
 
 
-while [ "$done" == false ]; do
-  options=(
-    "Update the panel"
-    "update Wings"
-    "Update both [0] and [1] on the same machine"
-  )
+install_options(){
+    output "Please select your upgrade option:"
+    output "[1] Upgrade panel to ${PANEL}."
+    output "[2] Upgrade wings to ${WINGS}."
+    output "[3] Upgrade panel to ${PANEL} and daemon to ${WINGS}."
+    read -r choice
+    case $choice in
+        1 ) installoption=4
+            output "You have selected to upgrade the panel to ${PANEL}."
+            ;;
+	2 ) installoption=5
+            output "You have selected to upgrade the daemon to ${DAEMON}."
+            ;;
+        3 ) installoption=6
+            output "You have selected to upgrade panel to ${PANEL} and daemon to ${DAEMON}."
+            ;;
+    esac
+}
 
-  actions=(
-    "$PANEL_LATEST_UPDATER"
-    "$WINGS_LATEST_UPDATER"
-    "$PANEL_LATEST_UDPATER;$WINGS_LATEST_UPDATER"
-  )
+get_latest_release() {
+  curl --silent "https://api.github.com/repos/pterodactyl/panel/releases/latest" | 
+    grep '"tag_name":' |                                            
+    sed -E 's/.*"([^"]+)".*/\1/'                                    
+}
 
-  output "Choose what you want to do:"
 
-  for i in "${!options[@]}"; do
-    output "[$i] ${options[$i]}"
-  done
+PTERODACTYL_VERSION="$(get_latest_release "pterodactyl/panel")"
 
-  echo -n "* Input 0-$((${#actions[@]} - 1)): "
-  read -r action
+getting_rightversion(){
+    if [ $PTERODACTYL_VERSION = $PTERODACTYL_VERSION ]; then
+        echo "Pterodactyl is up to date"
+        
+    else
+        echo "Pterodactyl is not up to date. Update Pterodactyl"
+    fi
+}
 
-  [ -z "$action" ] && error "Input is required" && continue
 
-  valid_input=("$(for ((i = 0; i <= ${#actions[@]} - 1; i += 1)); do echo "${i}"; done)")
-  [[ ! " ${valid_input[*]} " =~ ${action} ]] && error "Invalid option"
-  [[ " ${valid_input[*]} " =~ ${action} ]] && done=true && IFS=";" read -r i1 i2 <<<"${actions[$action]}" && execute "$i1" "$i2"
+
+detect_distro() {
+  if [ -r /etc/os-release ]; then
+        lsb_dist="$(. /etc/os-release && echo "$ID")"
+        dist_version="$(. /etc/os-release && echo "$VERSION_ID")"
+        if [ "$lsb_dist" = "rhel" ] || [ "$lsb_dist" = "rocky" ] || [ "$lsb_dist" = "almalinux" ]; then
+            dist_version="$(echo $dist_version | awk -F. '{print $1}')"
+        fi
+    else
+        exit 1
+    fi
+    
+    if [ "$lsb_dist" =  "ubuntu" ]; then
+        if  [ "$dist_version" != "20.04" ]; then
+            output "Unsupported Ubuntu version. Only Ubuntu 20.04 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" = "debian" ]; then
+        if [ "$dist_version" != "11" || $dist_version == '10']; then
+            output "Unsupported Debian version. Only Debian 10 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" = "centos" ]; then
+        if [ "$dist_version" != "8" ]; then
+            output "Unsupported CentOS version. Only CentOS Stream 8 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" != "ubuntu" ] && [ "$lsb_dist" != "debian" ] && [ "$lsb_dist" != "fedora" ] && [ "$lsb_dist" != "centos" ] && [ "$lsb_dist" != "rhel" ] && [ "$lsb_dist" != "rocky" ] && [ "$lsb_dist" != "almalinux" ]; then
+        output "Unsupported operating system."
+        output ""
+        output "Supported OS:"
+        output "Ubuntu: 20.04"
+        output "Debian: 11"
+        output "CentOS Stream: 8"
+        exit 2
+    fi
+}
+
+detecting_webserver(){
+    if [ $OS == "debian "]; then
+    echo "You're using $OS"
+        echo "Set Permissions for webserver"
+        chown -R www-data:www-data /var/www/pterodactyl/*
+    elif [ "$OS" == "centos" ]; then
+    echo "You're using $OS"
+    echo "Detecting nginx or apache2"
+        if [ -f /etc/apache2]; then
+        echo "using apache2 on $OS" 
+        chown -R apache:apache /var/www/pterodactyl/*
+        elif  [ -f /etc/nginx]; then
+        echo   "using nginx on $OS"
+        chown -R nginx:nginx /var/www/pterodactyl/*
+        else 
+        echo "No webserver detected"
+    fi
+    fi
+}
+
+update_panel(){
+    echo "Detecting OS..."
+    detect_distro
+    if [ $OS == "centos " ]; then
+        OS=centos
+    elif [ $OS == "debian" ]; then
+        OS=debian
+    elif [ $OS == "ubuntu " ]; then
+        OS=ubuntu
+    else
+        echo "OS not supported"
+        exit 1
+    fi
+    echo "* Updating Pterodactyl Panel"
+    echo "Enable Maintanance Mode"
+    php artisan down
+    echo "Donwloading latest panel update ..."
+    curl -L https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz | tar -xzv
+    echo "Downloding completed"
+    echo "Set correct permissions"
+    chmod -R 755 storage/* bootstrap/cache
+    echo "Permissions set correctly"
+    echo "Updating depencies"
+    composer install --no-dev --optimize-autoloader
+    echo "Depencies upated"
+    echo "Clearing cache"
+    php artisan view:clear
+    php artisan config:clear
+    echo "Cache cleared"
+    echo "Upating database"
+    php artisan migrate --seed --force
+    echo "Updated Database"
+    echo "Detecting OS and getting webserver"
+    detecting_webserver
+    echo "Restarting Queue Workers"
+    php artisan queue:restart
+    echo "Disable Maintanance Mode"
+    php artisan up
+    echo "Panel is now updated to the latest version\n Now $PTERODACTYL_VERSION"
+}
+
+goodbey_ptero(){
+    echo "Thanks for using this script"
+    echo "Goodbye"
+    exit 0
+}
+
+upgrade_pterodactyl(){
+  getting_rightversion
+  update_panel
+  goodbey
+}
+
+get_latest_release_wings() {
+  curl --silent "https://api.github.com/repos/pterodactyl/wings/releases/latest" | 
+    grep '"tag_name":' |                                            
+    sed -E 's/.*"([^"]+)".*/\1/'                                    
+}
+
+
+WINGS_VERSION="$(get_latest_release_wings "pterodactyl/wings")"
+
+getting_rightversion(){
+    if [ $WINGS_VERSION !== $WINGS_VERSION ]; then
+        echo "Wings is up to date"
+        exit 0
+    else
+        echo "Wings is not up to date"
+        echo "Updating Wings"
+    fi
+}
+
+
+update_wings(){
+    echo "Detecting OS..."
+     if [ $OS == 'centos ']; then
+        OS=centos
+    elif [ $OS == "debian " ]; then
+        OS=debian
+    elif [ $OS == 'ubuntu ' ]; then
+        OS=ubuntu
+    else
+        echo "OS not supported\nOnly supported OS are: Debian, Ubuntu and CentOS"
+        exit 1
+    fi
+    echo "$OS detected"
+    echo "* Updating Wings"
+    echo "Stop wings"
+    systemctl stop wings
+    echo "Donwloading latest wings update ..."
+    curl -L -o /usr/local/bin/wings "https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_$([[ "$(uname -m)" == "x86_64" ]] && echo "amd64" || echo "arm64")"
+    echo "Set wings to executable"
+    chmod u+x /usr/local/bin/wings
+    echo "Start wings"
+    systemctl start wings
+   
+}
+
+goodbey_wings(){
+    echo "Wings is now updated to the latest version"
+    echo "Thanks for using this script"
+    echo "Goodbye"
+    exit 0
+}
+
+install_options
+case $installoption in 
+    1)  upgrade_pterodactyl
+        ;;
+    2)  upgrade_wings
+        ;;
+    3)  upgrade_pterodactyl
+	      upgrade_wings
+esac
 
     
 
