@@ -100,27 +100,22 @@ detect_distro() {
     fi
     
     if [ "$lsb_dist" =  "ubuntu" ]; then
-        if  [ "$dist_version" != "20.04" ]; then
-            output "Unsupported Ubuntu version. Only Ubuntu 20.04 is supported."
-            exit 2
+         OS=ubuntu
         fi
     elif [ "$lsb_dist" = "debian" ]; then
-        if [ "$dist_version" != "11" ]; then
-            output "Unsupported Debian version. Only Debian 10 & 11 is supported."
-            exit 2
+        OS=debian
         fi
     elif [ "$lsb_dist" = "centos" ]; then
-        if [ "$dist_version" != "8" ]; then
-            output "Unsupported CentOS version. Only CentOS Stream 8 is supported."
-            exit 2
+        OS=centos
+        fi
         fi
     elif [ "$lsb_dist" != "ubuntu" ] && [ "$lsb_dist" != "debian" ] && [ "$lsb_dist" != "centos" ]; then
         output "Unsupported operating system."
         output ""
         output "Supported OS:"
-        output "Ubuntu: 20.04"
-        output "Debian: 11"
-        output "CentOS Stream: 8"
+        output "Ubuntu"
+        output "Debian"
+        output "CentOS"
         exit 2
     fi
 }
