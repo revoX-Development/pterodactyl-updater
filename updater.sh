@@ -204,6 +204,7 @@ WINGS_VERSION="$(get_latest_release_wings "pterodactyl/wings")"
 getting_rightversion_wings(){
     if [ $WINGS_VERSION == $WINGS_VERSION ]; then
         echo "Wings is up to date"
+        exit 2
     else
         echo "Wings is not up to date"
         echo "Updating Wings"
