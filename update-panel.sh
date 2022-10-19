@@ -22,15 +22,15 @@ get_latest_release() {
 PTERODACTYL_VERSION="$(get_latest_release "pterodactyl/panel")"
 
 getting_rightversion(){
-    if [ $PTERODACTYL_VERSION !== $PTERODACTYL_VERSION ]; then
+    if [ $PTERODACTYL_VERSION = $PTERODACTYL_VERSION ]; then
         echo "Pterodactyl is up to date"
-        exit 0
+        exit 1
     else
-        echo "Pterodactyl is not up to date"
-        echo "Updating Pterodactyl"
-        update_panel
+        echo "Pterodactyl is not up to date. Update Pterodactyl"
     fi
 }
+
+
 
 detect_distro() {
   if [ -f /etc/os-release ]; then
@@ -70,7 +70,7 @@ detect_distro() {
 }
 
 detecting_webserver(){
-    if [ $OS ]; then
+    if [ $OS == "debian "]; then
     echo "You're using $OS"
         echo "Set Permissions for webserver"
         chown -R www-data:www-data /var/www/pterodactyl/*
@@ -91,6 +91,7 @@ detecting_webserver(){
 
 update_panel(){
     echo "Detecting OS..."
+    detect_distro
     if [ $OS == "centos " ]; then
         OS=centos
     elif [ $OS == "debian "]; then
@@ -134,7 +135,7 @@ goodbey(){
     echo "Goodbye"
     exit 0
 }
-
+getting_rightversion
 update_panel
 goodbey
 done

@@ -6,6 +6,8 @@ set -e
 SCRIPT_VERSION="v0.0.1"
 SCRIPT_NAME="Pterodactyl Wings Updater"
 LOG_PATH="/var/log/pterodactyl-updater.log"
+GITHUB_BASE_URL="https://raw.githubusercontent.com/revoX-Development/pterodactyl-updater/master"
+
 
 if [[ $EUID -ne 0 ]]; then
   echo "* This script must be executed with root privileges (sudo)." 1>&2
@@ -24,7 +26,7 @@ output() {
 }
 
 execute() {
-  echo -e "\n\n* pterodactyl-installer $(date) \n\n" >>$LOG_PATH
+    echo -e "\n\n* pterodactyl/wings-updater $(date) \n\n" >>$LOG_PATH
 
   bash <(curl -s "$1") | tee -a $LOG_PATH
   [[ -n $2 ]] && execute "$2"
@@ -37,21 +39,22 @@ output
 output "Copyright (C) 2022, revoX-Development"
 output "https://github.com/revoX-development/pterodactyl-updater"
 output
-output "Donations: https://revox.linK/donate"
+output "Donations: https://revox.link/donate"
 output "This script is not associated with the official Pterodactyl Project."
 
 output
 
-PANEL_LATEST_UPDATER="$GITHUB_BASE_URL/$SCRIPT_VERSION/update-panel.sh"
+output "This script will update your Pterodactyl Wings installation."
+PANEL_LATEST="$GITHUB_BASE_URL/$SCRIPT_VERSION/update-panel.sh"
 
-WINGS_LATEST_UPDATER="$GITHUB_BASE_URL/$SCRIPT_VERSION/update_wings.sh"
+WINGS_LATEST="$GITHUB_BASE_URL/$SCRIPT_VERSION/update-wings.sh"
 
 
 while [ "$done" == false ]; do
   options=(
     "Update the panel"
     "update Wings"
-    "Update both [0] and [1] on the same machine (wings script runs after panel)"
+    "Update both [0] and [1] on the same machine"
   )
 
   actions=(
@@ -74,4 +77,9 @@ while [ "$done" == false ]; do
   valid_input=("$(for ((i = 0; i <= ${#actions[@]} - 1; i += 1)); do echo "${i}"; done)")
   [[ ! " ${valid_input[*]} " =~ ${action} ]] && error "Invalid option"
   [[ " ${valid_input[*]} " =~ ${action} ]] && done=true && IFS=";" read -r i1 i2 <<<"${actions[$action]}" && execute "$i1" "$i2"
-done
+
+    
+
+
+
+
