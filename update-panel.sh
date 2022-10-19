@@ -10,11 +10,7 @@ if ! [ -x "$(command -v curl)" ]; then
   exit 1
 fi
 
-if ! [ -f /etc/pterodactyl]; then
-  echo "* Pterodactyl is not installed on this server."
-  echo "* Please install Pterodactyl first or run this script on a different server."
-  exit 1
-fi
+
 
 get_latest_release() {
   curl --silent "https://api.github.com/repos/pterodactyl/panel/releases/latest" | 
