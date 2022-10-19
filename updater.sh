@@ -7,8 +7,7 @@ SCRIPT_VERSION="v0.0.1"
 SCRIPT_NAME="Pterodactyl Wings Updater"
 LOG_PATH="/var/log/pterodactyl-updater.log"
 GITHUB_BASE_URL="https://raw.githubusercontent.com/revoX-Development/pterodactyl-updater/"
-PANEL= latest
-WINGS = latest
+
 
 
 if [[ $EUID -ne 0 ]]; then
@@ -36,7 +35,7 @@ execute() {
 
 done=false
 
-output "$SCRIPT_NAME @ $SCRIPT_VERSION"
+output "$SCRIPT_NAME  $SCRIPT_VERSION"
 output
 output "Copyright (C) 2022, revoX-Development"
 output "https://github.com/revoX-development/pterodactyl-updater"
@@ -51,21 +50,9 @@ output "This script will update your Pterodactyl Wings installation."
 
 install_options(){
     output "Please select your upgrade option:"
-    output "[1] Upgrade panel to ${PANEL}."
-    output "[2] Upgrade wings to ${WINGS}."
-    output "[3] Upgrade panel to ${PANEL} and daemon to ${WINGS}."
-    read -r choice
-    case $choice in
-        1 ) installoption=1
-            output "You have selected to upgrade the panel to ${PANEL}."
-            ;;
-	2 ) installoption=2
-            output "You have selected to upgrade the daemon to ${DAEMON}."
-            ;;
-        3 ) installoption=3
-            output "You have selected to upgrade panel to ${PANEL} and daemon to ${DAEMON}."
-            ;;
-    esac
+    output "[1] Upgrade panel to the latest version"
+    output "[2] Upgrade wings to the latest version."
+    output "[3] Upgrade panel and wings to the latest version."
 }
 
 get_latest_release() {
@@ -77,7 +64,7 @@ get_latest_release() {
 
 PTERODACTYL_VERSION="$(get_latest_release "pterodactyl/panel")"
 
-getting_rightversion(){
+getting_rightversion_ptero(){
     if [ $PTERODACTYL_VERSION = $PTERODACTYL_VERSION ]; then
         echo "Pterodactyl is up to date"
         
@@ -114,7 +101,7 @@ detect_distro() {
             output "Unsupported CentOS version. Only CentOS Stream 8 is supported."
             exit 2
         fi
-    elif [ "$lsb_dist" != "ubuntu" ] && [ "$lsb_dist" != "debian" ] && [ "$lsb_dist" != "fedora" ] && [ "$lsb_dist" != "centos" ] && [ "$lsb_dist" != "rhel" ] && [ "$lsb_dist" != "rocky" ] && [ "$lsb_dist" != "almalinux" ]; then
+    elif [ "$lsb_dist" != "ubuntu" ] && [ "$lsb_dist" != "debian" ] && [ "$lsb_dist" != "centos" ]; then
         output "Unsupported operating system."
         output ""
         output "Supported OS:"
@@ -126,11 +113,11 @@ detect_distro() {
 }
 
 detecting_webserver(){
-    if [ $OS == "debian "]; then
+    if [ $lsb_dist == "debian " ||$lsb_dist == "ubuntu "]; then
     echo "You're using $OS"
         echo "Set Permissions for webserver"
         chown -R www-data:www-data /var/www/pterodactyl/*
-    elif [ "$OS" == "centos" ]; then
+    elif [ $lsb_dist == "centos" ]; then
     echo "You're using $OS"
     echo "Detecting nginx or apache2"
         if [ -f /etc/apache2]; then
@@ -148,16 +135,6 @@ detecting_webserver(){
 update_panel(){
     echo "Detecting OS..."
     detect_distro
-    if [ $OS == "centos " ]; then
-        OS=centos
-    elif [ $OS == "debian" ]; then
-        OS=debian
-    elif [ $OS == "ubuntu " ]; then
-        OS=ubuntu
-    else
-        echo "OS not supported"
-        exit 1
-    fi
     echo "* Updating Pterodactyl Panel"
     echo "Enable Maintanance Mode"
     php artisan down
@@ -193,9 +170,9 @@ goodbey_ptero(){
 }
 
 upgrade_pterodactyl(){
-  getting_rightversion
+  getting_rightversion_ptero
   update_panel
-  goodbey
+  goodbey_ptero
 }
 
 get_latest_release_wings() {
@@ -207,7 +184,7 @@ get_latest_release_wings() {
 
 WINGS_VERSION="$(get_latest_release_wings "pterodactyl/wings")"
 
-getting_rightversion(){
+getting_rightversion_wings(){
     if [ $WINGS_VERSION !== $WINGS_VERSION ]; then
         echo "Wings is up to date"
         exit 0
@@ -234,7 +211,7 @@ update_wings(){
     echo "* Updating Wings"
     echo "Stop wings"
     systemctl stop wings
-    echo "Donwloading latest wings update ..."
+    echo "Downloading latest wings update ..."
     curl -L -o /usr/local/bin/wings "https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_$([[ "$(uname -m)" == "x86_64" ]] && echo "amd64" || echo "arm64")"
     echo "Set wings to executable"
     chmod u+x /usr/local/bin/wings
@@ -248,6 +225,12 @@ goodbey_wings(){
     echo "Thanks for using this script"
     echo "Goodbye"
     exit 0
+}
+
+upgrade_wings(){
+  getting_rightversion_wings
+  update_wings
+  goodbey_wings
 }
 
 install_options
