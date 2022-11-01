@@ -3,9 +3,8 @@
 set -e
 
 
-SCRIPT_VERSION="v0.0.1"
-SCRIPT_NAME="Pterodactyl Wings Updater"
-LOG_PATH="/var/log/pterodactyl-updater.log"
+SCRIPT_VERSION="v0.0.2"
+SCRIPT_NAME="Pterodactyl & Wings Updater"
 GITHUB_BASE_URL="https://raw.githubusercontent.com/revoX-Development/pterodactyl-updater/"
 
 
@@ -37,53 +36,33 @@ done=false
 
 output "$SCRIPT_NAME  $SCRIPT_VERSION"
 output
-output "Copyright (C) 2022, revoX-Development"
-output "https://github.com/revoX-development/pterodactyl-updater"
-output
-output "Donations: https://revox.link/donate"
+output "Donate: https://revox.link/donate"
 output "This script is not associated with the official Pterodactyl Project."
 
 output
 
-output "This script will update your Pterodactyl Wings installation."
+output "This script will update your Pterodactyl & Wings installation."
 
 
 install_options(){
     output "Please select your upgrade option:"
-    output "[1] Upgrade panel to the latest version"
-    output "[2] Upgrade wings to the latest version."
-    output "[3] Upgrade panel and wings to the latest version."
+    output "[1] Upgrade panel "
+    output "[2] Upgrade wings"
+    output "[3] Upgrade panel & wings"
     read -r choice
     case $choice in
         1 ) installoption=1
-            output "You have selected the pterodactyl panel upgrade option."
+            output "You have selected the Panel upgrade option."
             ;;
         2 ) installoption=2
-            output "You have selected the pterodactyl wings upgrade option."
+            output "You have selected the Wings upgrade option."
             ;;
         3 ) installoption=3
-            output "You have selected the pterodactyl panel and wings upgrade option."
+            output "You have selected the Panel and Wings upgrade option."
             ;;
     esac
 }
 
-get_latest_release() {
-  curl --silent "https://api.github.com/repos/pterodactyl/panel/releases/latest" | 
-    grep '"tag_name":' |                                            
-    sed -E 's/.*"([^"]+)".*/\1/'                                    
-}
-
-
-PTERODACTYL_VERSION="$(get_latest_release "pterodactyl/panel")"
-
-getting_rightversion_ptero(){
-    if [ $PTERODACTYL_VERSION = $PTERODACTYL_VERSION ]; then
-        echo "Pterodactyl is up to date. Exiting Updating Script"
-        exit 2
-    else
-        echo "Update from Pterodactyl avaible. Update Pterodactyl"
-    fi
-}
 
 lsb_dist="$(. /etc/os-release && echo "$ID")"
 dist_version="$(. /etc/os-release && echo "$VERSION_ID")"
@@ -182,28 +161,8 @@ goodbey_ptero(){
 }
 
 upgrade_pterodactyl(){
-  getting_rightversion_ptero
   update_panel
   goodbey_ptero
-}
-
-get_latest_release_wings() {
-  curl --silent "https://api.github.com/repos/pterodactyl/wings/releases/latest" | 
-    grep '"tag_name":' |                                            
-    sed -E 's/.*"([^"]+)".*/\1/'                                    
-}
-
-
-WINGS_VERSION="$(get_latest_release_wings "pterodactyl/wings")"
-
-getting_rightversion_wings(){
-    if [ $WINGS_VERSION == $WINGS_VERSION ]; then
-        echo "Wings is up to date"
-        exit 2
-    else
-        echo "Wings is not up to date"
-        echo "Updating Wings"
-    fi
 }
 
 
@@ -233,7 +192,6 @@ goodbey_wings(){
 }
 
 upgrade_wings(){
-  getting_rightversion_wings
   update_wings
   goodbey_wings
 }
